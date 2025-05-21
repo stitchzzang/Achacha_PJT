@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { NativeModules } from 'react-native';
+import NearbyUsersService from '../services/NearbyUsersService';
 const { WearSyncModule } = NativeModules;
 
 /**
@@ -116,6 +117,7 @@ const useAuthStore = create((set, get) => ({
   // 토큰 업데이트
   updateTokens: async (newAccessToken, newRefreshToken, newBleToken, newUserId) => {
     try {
+      const prevBleToken = get().bleToken;
       if (newAccessToken) {
         await AsyncStorage.setItem('accessToken', newAccessToken);
       }
@@ -139,6 +141,15 @@ const useAuthStore = create((set, get) => ({
         bleToken: newBleToken || get().bleToken,
         userId: newUserId || get().userId,
       });
+
+      // BLE 토큰이 변경된 경우 && 광고가 중지 상태일 때만 광고 시작
+      if (
+        newBleToken &&
+        newBleToken !== prevBleToken &&
+        !NearbyUsersService.isAdvertising // 광고 중이 아닐 때만
+      ) {
+        await NearbyUsersService.startAdvertising();
+      }
       return true;
     } catch (error) {
       console.error('토큰 업데이트 실패:', error);

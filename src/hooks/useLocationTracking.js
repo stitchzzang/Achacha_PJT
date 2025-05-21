@@ -27,10 +27,10 @@ const useLocationTracking = () => {
       // 백그라운드 위치 권한 요청
       if (Platform.OS === 'android') {
         const { status: backgroundStatus } = await Location.requestBackgroundPermissionsAsync();
-        if (backgroundStatus !== 'granted') {
-          // 백그라운드 권한은 필수는 아니지만 경고 표시
-          console.log('백그라운드 위치 권한이 거부됨');
-        }
+        // if (backgroundStatus !== 'granted') {
+        //   // 백그라운드 권한은 필수는 아니지만 경고 표시
+        //   // console.log('백그라운드 위치 권한이 거부됨');
+        // }
       }
 
       return true;
@@ -45,7 +45,7 @@ const useLocationTracking = () => {
     (async () => {
       const { status } = await Location.requestForegroundPermissionsAsync();
       setPermissionStatus(status);
-      console.log('위치 권한 상태:', status);
+      // console.log('위치 권한 상태:', status);
 
       if (!ALLOWED_STATUSES.includes(status)) {
         setErrorMsg('위치 권한이 거부되었습니다.');
@@ -59,7 +59,7 @@ const useLocationTracking = () => {
         });
 
         setLocation(currentLocation);
-        console.log('현재 위치:', currentLocation);
+        // console.log('현재 위치:', currentLocation);
       } catch (error) {
         setErrorMsg('위치 정보를 가져오는데 실패했습니다: ' + error.message);
         console.error('위치 정보 오류:', error);
@@ -83,7 +83,7 @@ const useLocationTracking = () => {
         },
         newLocation => {
           setLocation(newLocation);
-          console.log('위치 업데이트:', newLocation);
+          // console.log('위치 업데이트:', newLocation);
         }
       );
 

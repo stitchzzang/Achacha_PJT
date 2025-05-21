@@ -1,56 +1,63 @@
-import React, { useCallback, useMemo, useRef, useEffect } from 'react';
+import React, { useCallback, useMemo, useRef, useEffect, forwardRef } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
 import BottomSheet from '@gorhom/bottom-sheet';
 import MapGifticonList from './map/MapGifticonList';
 import Icon from 'react-native-vector-icons/MaterialIcons';
 
-const GifticonBottomSheet = ({ gifticons, onUseGifticon, onSelectBrand, selectedBrand }) => {
-  const bottomSheetRef = useRef(null);
-  const snapPoints = useMemo(() => ['5%', '30%', '50%'], []);
+const GifticonBottomSheet = forwardRef(
+  ({ gifticons, onUseGifticon, onSelectBrand, selectedBrand, onSheetIndexChange }, ref) => {
+    const snapPoints = useMemo(() => ['5%', '30%', '50%'], []);
 
-  useEffect(() => {
-    if (selectedBrand && bottomSheetRef.current) {
-      bottomSheetRef.current.snapToIndex(1); // '25%'에 해당하는 인덱스
-    }
-  }, [selectedBrand]);
+    useEffect(() => {
+      if (selectedBrand && ref && ref.current) {
+        ref.current.snapToIndex(1); // '30%'에 해당하는 인덱스
+      }
+    }, [selectedBrand, ref]);
 
-  const handleSheetChanges = useCallback(index => {
-    console.log('handleSheetChanges', index);
-  }, []);
+    const handleSheetChanges = useCallback(
+      index => {
+        console.log('handleSheetChanges', index);
+        if (onSheetIndexChange) {
+          onSheetIndexChange(index);
+        }
+      },
+      [onSheetIndexChange]
+    );
 
-  const handleBackPress = () => {
-    onSelectBrand(null); // 선택된 브랜드 초기화
-  };
+    const handleBackPress = () => {
+      onSelectBrand(null); // 선택된 브랜드 초기화
+    };
 
-  return (
-    <BottomSheet
-      ref={bottomSheetRef}
-      index={1}
-      snapPoints={snapPoints}
-      onChange={handleSheetChanges}
-      handleStyle={styles.handle}
-      handleIndicatorStyle={styles.indicator}
-      backgroundStyle={styles.background}
-    >
-      {selectedBrand && (
-        <View style={styles.headerContainer}>
-          <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
-            <Icon name="arrow-back-ios" type="material" size={22} color="#56AEE9" />
-            <Text style={styles.backText}>전체 목록</Text>
-          </TouchableOpacity>
+    return (
+      <BottomSheet
+        ref={ref}
+        index={1}
+        snapPoints={snapPoints}
+        onChange={handleSheetChanges}
+        handleStyle={styles.handle}
+        handleIndicatorStyle={styles.indicator}
+        backgroundStyle={styles.background}
+      >
+        {selectedBrand && (
+          <View style={styles.headerContainer}>
+            <TouchableOpacity style={styles.backButton} onPress={handleBackPress}>
+              <Icon name="arrow-back-ios" type="material" size={22} color="#56AEE9" />
+              <Text style={styles.backText}>전체 목록</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        <View style={styles.contentContainer}>
+          <MapGifticonList
+            gifticons={gifticons}
+            onUseGifticon={onUseGifticon}
+            onSelectBrand={onSelectBrand}
+            selectedBrand={selectedBrand}
+          />
         </View>
-      )}
-      <View style={styles.contentContainer}>
-        <MapGifticonList
-          gifticons={gifticons}
-          onUseGifticon={onUseGifticon}
-          onSelectBrand={onSelectBrand}
-          selectedBrand={selectedBrand}
-        />
-      </View>
-    </BottomSheet>
-  );
-};
+      </BottomSheet>
+    );
+  }
+);
 
 const styles = StyleSheet.create({
   contentContainer: {

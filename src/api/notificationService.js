@@ -166,7 +166,7 @@ const notificationService = {
    */
   async getNotifications(params = {}) {
     try {
-      console.log('[API] 알림 내역 목록 조회 요청', params);
+      // console.log('[API] 알림 내역 목록 조회 요청', params);
 
       // 기본값 설정
       const defaultParams = {
@@ -181,7 +181,7 @@ const notificationService = {
         params: queryParams,
       });
 
-      console.log('[API] 알림 내역 목록 조회 성공:', response.data);
+      // console.log('[API] 알림 내역 목록 조회 성공:', response.data);
       return response.data;
     } catch (error) {
       console.error('[API] 알림 내역 목록 조회 실패:', error);

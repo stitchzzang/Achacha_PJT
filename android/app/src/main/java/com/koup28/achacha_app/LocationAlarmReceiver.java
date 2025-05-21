@@ -16,12 +16,15 @@ public class LocationAlarmReceiver extends BroadcastReceiver {
   public void onReceive(Context context, Intent intent) {
     Log.d(TAG, "알람 수신: 위치 서비스 시작");
     
-    // 위치 업데이트 서비스 시작
+    // 위치 업데이트 서비스 시작 (알림 없이)
     Intent serviceIntent = new Intent(context, BackgroundLocationService.class);
+    serviceIntent.putExtra("skipNotification", true); // 알림 스킵 플래그 추가
     
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      Log.d(TAG, "startForegroundService 호출");
       context.startForegroundService(serviceIntent);
     } else {
+      Log.d(TAG, "startService 호출");
       context.startService(serviceIntent);
     }
     
@@ -47,7 +50,7 @@ public class LocationAlarmReceiver extends BroadcastReceiver {
       flags
     );
     
-    // 30분마다 반복 알람 (배터리 최적화 고려하여 시간 조정 가능)
+    // 30분마다 반복 알람
     long intervalMillis = 30 * 60 * 1000; // 30분
     long triggerAtMillis = System.currentTimeMillis() + intervalMillis;
     
@@ -58,13 +61,6 @@ public class LocationAlarmReceiver extends BroadcastReceiver {
         pendingIntent
       );
       Log.d(TAG, "알람 예약됨 (setExactAndAllowWhileIdle): " + triggerAtMillis);
-    } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
-      alarmManager.setExact(
-        AlarmManager.RTC_WAKEUP,
-        triggerAtMillis,
-        pendingIntent
-      );
-      Log.d(TAG, "알람 예약됨 (setExact): " + triggerAtMillis);
     } else {
       alarmManager.set(
         AlarmManager.RTC_WAKEUP,

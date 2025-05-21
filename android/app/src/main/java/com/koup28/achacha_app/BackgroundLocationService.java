@@ -37,7 +37,8 @@ public class BackgroundLocationService extends HeadlessJsTaskService {
       
       // 아이콘 설정
       try {
-        int iconResourceId = getResources().getIdentifier("ic_notification", "drawable", getPackageName());
+        // adaptive_icon.png를 찾도록 수정
+        int iconResourceId = getResources().getIdentifier("adaptive_icon", "drawable", getPackageName());
         if (iconResourceId != 0) {
           builder.setSmallIcon(iconResourceId);
         } else {

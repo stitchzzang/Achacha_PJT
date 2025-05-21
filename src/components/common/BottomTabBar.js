@@ -269,7 +269,7 @@ const BottomTabBar = () => {
         name="TabMap"
         component={WrappedMapScreen}
         options={{
-          tabBarLabel: 'MAP',
+          tabBarLabel: '내 주변',
           tabBarLabelStyle: {
             fontFamily: 'Pretendard-SemiBold',
             fontSize: LABEL_FONTSIZE,

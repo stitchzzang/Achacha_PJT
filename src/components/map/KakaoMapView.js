@@ -11,6 +11,12 @@ const { width } = Dimensions.get('window');
 // 지오펜싱 서비스 싱글톤 인스턴스
 let geofencingServiceInstance = null;
 
+// 초기 지도 중심 좌표
+const INITIAL_MAP_CENTER = {
+  latitude: 36.1071383,
+  longitude: 128.4164758,
+};
+
 const KakaoMapView = forwardRef(
   ({ uniqueBrands, selectedBrand, onSelectBrand, onStoresFound }, ref) => {
     const [mapLoaded, setMapLoaded] = useState(false);
@@ -24,13 +30,21 @@ const KakaoMapView = forwardRef(
     useEffect(() => {
       if (!geofencingServiceInstance && uniqueBrands) {
         geofencingServiceInstance = new GeofencingService(uniqueBrands);
-        console.log('GeofencingService 인스턴스 생성 (싱글톤)');
+        // console.log('GeofencingService 인스턴스 생성 (싱글톤)');
       }
     }, [uniqueBrands]);
 
     // 부모 컴포넌트에서 현재 위치로 이동 메서드 접근 허용
     useImperativeHandle(ref, () => ({
-      moveToCurrentLocation: () => moveToCurrentLocation(),
+      moveToCurrentLocation: () => {
+        if (location && location.coords) {
+          moveToLocation(location.coords);
+        } else {
+          // 사용자의 현재 위치를 알 수 없을 경우, 지정된 초기 위치로 이동
+          console.log('사용자 현재 위치 정보 없음. 초기 설정 위치로 이동합니다.');
+          moveToLocation(INITIAL_MAP_CENTER);
+        }
+      },
     }));
 
     // 위치 정보가 확인된 후에만 지오펜싱 초기화
@@ -77,15 +91,15 @@ const KakaoMapView = forwardRef(
 
         if (data.type === 'mapLoaded' && data.success) {
           setMapLoaded(true);
-          console.log('맵 로드됨, 위치 정보:', location ? '있음' : '없음');
+          // console.log('맵 로드됨, 위치 정보:', location ? '있음' : '없음');
 
           setTimeout(() => {
-            if (location) {
-              moveToCurrentLocation();
-            }
-            // 초기 로드 시 중복될 수 있는 직접적인 매장 검색 호출 제거
-            // if (location && uniqueBrands && uniqueBrands.length > 0) {
-            //     debouncedSearchNearbyStores({ latitude: location.coords.latitude, longitude: location.coords.longitude });
+            // 맵 로드 시 초기 설정 위치로 이동하고 주변 검색
+            moveToLocation(INITIAL_MAP_CENTER);
+            debouncedSearchNearbyStores(INITIAL_MAP_CENTER);
+            setPrevLocation(INITIAL_MAP_CENTER); // 초기 검색을 위해 prevLocation 설정
+            // if (location) { // 기존 현재 위치 이동 로직 제거
+            //   moveToCurrentLocation();
             // }
           }, 1000); // 약간의 지연을 두어 map 객체가 완전히 준비되도록 함
         }
@@ -105,7 +119,7 @@ const KakaoMapView = forwardRef(
 
         // 지도 이동 완료 이벤트 처리
         if (data.type === 'mapMoved') {
-          console.log('[KakaoMapView] 지도 이동 완료. 새 중심:', data.latitude, data.longitude);
+          // console.log('[KakaoMapView] 지도 이동 완료. 새 중심:', data.latitude, data.longitude);
           if (uniqueBrands && uniqueBrands.length > 0) {
             const movedCenter = { latitude: data.latitude, longitude: data.longitude };
             debouncedSearchNearbyStores(movedCenter);
@@ -118,21 +132,21 @@ const KakaoMapView = forwardRef(
     };
 
     // 위치 정보가 변경될 때마다 지도 업데이트
-    useEffect(() => {
-      if (location && mapLoaded && webViewRef.current) {
-        console.log('위치 정보 변경됨, 맵 업데이트 시도');
-        moveToCurrentLocation();
-      }
-    }, [location, mapLoaded]);
+    // useEffect(() => {
+    //   if (location && mapLoaded && webViewRef.current) {
+    //     // console.log('위치 정보 변경됨, 맵 업데이트 시도');
+    //     moveToLocation(location.coords); // 사용자의 현재 위치로 이동하도록 수정 (선택적)
+    //   }
+    // }, [location, mapLoaded]);
 
-    // 현재 위치로 지도 이동 함수
-    const moveToCurrentLocation = () => {
-      if (!location || !webViewRef.current) {
-        console.log('위치 이동 불가: 위치 정보 또는 webViewRef 없음');
+    // 지정된 좌표로 지도 이동 함수 (기존 moveToCurrentLocation에서 변경)
+    const moveToLocation = coords => {
+      if (!coords || !webViewRef.current) {
+        console.log('위치 이동 불가: 좌표 정보 또는 webViewRef 없음');
         return;
       }
 
-      const { latitude, longitude } = location.coords;
+      const { latitude, longitude } = coords;
 
       const script = `
       try {
@@ -196,34 +210,33 @@ const KakaoMapView = forwardRef(
       if (searchTimerRef.current) {
         clearTimeout(searchTimerRef.current);
       }
-
-      console.log('디바운스 타이머 설정: 1초 후 검색 예정, 중심:', centerCoords);
+      // console.log('디바운스 타이머 설정: 1초 후 검색 예정, 중심:', centerCoords);
       searchTimerRef.current = setTimeout(() => {
-        console.log('디바운스 타이머 만료: 검색 실행, 중심:', centerCoords);
+        // console.log('디바운스 타이머 만료: 검색 실행, 중심:', centerCoords);
         searchNearbyStores(centerCoords);
       }, 1000); // 1초 디바운스
     };
 
     // 주변 매장 검색 및 지오펜스 설정 함수
     const searchNearbyStores = async searchCenter => {
-      console.log(
-        '[KakaoMapView] 매장 검색 요청, 브랜드:',
-        uniqueBrands.map(b => b.brandName).join(', '),
-        '중심:',
-        searchCenter
-      );
+      // console.log(
+      //   '[KakaoMapView] 매장 검색 요청, 브랜드:',
+      //   uniqueBrands.map(b => b.brandName).join(', '),
+      //   '중심:',
+      //   searchCenter
+      // );
       if (!searchCenter || !uniqueBrands || uniqueBrands.length === 0) {
-        console.log('조건 미충족으로 리턴 (searchCenter 또는 uniqueBrands 없음)');
+        // console.log('조건 미충족으로 리턴 (searchCenter 또는 uniqueBrands 없음)');
         return;
       }
 
       const { latitude, longitude } = searchCenter;
-      console.log(`검색 위치: ${latitude}, ${longitude}`);
+      // console.log(`검색 위치: ${latitude}, ${longitude}`);
 
       try {
         // 각 브랜드별 매장 검색
         const searchPromises = uniqueBrands.map(async brand => {
-          console.log(`브랜드 검색 중: ${brand.brandName}`);
+          // console.log(`브랜드 검색 중: ${brand.brandName}`);
           const response = await fetch(
             `https://dapi.kakao.com/v2/local/search/keyword.json?` +
               `query=${encodeURIComponent(brand.brandName)}&` +
@@ -244,7 +257,7 @@ const KakaoMapView = forwardRef(
           }
 
           const data = await response.json();
-          console.log(`${brand.brandName} 검색 결과: ${data.documents.length}개 매장 찾음`);
+          // console.log(`${brand.brandName} 검색 결과: ${data.documents.length}개 매장 찾음`);
 
           return {
             brandId: brand.brandId,
@@ -254,10 +267,10 @@ const KakaoMapView = forwardRef(
         });
 
         const results = await Promise.all(searchPromises);
-        console.log(
-          '총 매장 수:',
-          results.reduce((sum, brand) => sum + brand.stores.length, 0)
-        );
+        // console.log(
+        //   '총 매장 수:',
+        //   results.reduce((sum, brand) => sum + brand.stores.length, 0)
+        // );
 
         // 전체 매장 데이터 저장 및 지도에 표시 (selectedBrand 함께 전달)
         window.allStoreData = results;
@@ -265,7 +278,7 @@ const KakaoMapView = forwardRef(
 
         // 중요: 여기에서 부모 컴포넌트에 결과 전달 추가
         if (typeof onStoresFound === 'function') {
-          console.log('[KakaoMapView] 부모 컴포넌트(MapScreen)에 매장 데이터 전달');
+          // console.log('[KakaoMapView] 부모 컴포넌트(MapScreen)에 매장 데이터 전달');
           onStoresFound(results);
         } else {
           console.error('[KakaoMapView] onStoresFound 함수가 정의되지 않음');
@@ -278,25 +291,26 @@ const KakaoMapView = forwardRef(
     // 위치 변경 시 100m 이상 이동 시에만 매장 재검색
     useEffect(() => {
       if (location && mapLoaded && uniqueBrands && uniqueBrands.length > 0) {
-        const { latitude, longitude } = location.coords;
+        const { latitude, longitude } = location.coords; // 실제 사용자 위치 기준
         const currentCoords = { latitude, longitude };
 
         // 이전 위치와 비교하여 100m 이상 이동했는지 확인
+        // prevLocation이 INITIAL_MAP_CENTER로 시작하므로, 첫 실제 위치 업데이트 시 검색 가능성 있음
         const shouldSearchAgain =
           !prevLocation ||
           calculateDistance(prevLocation.latitude, prevLocation.longitude, latitude, longitude) >
             100;
 
         if (shouldSearchAgain) {
-          console.log('위치 변경 감지: 100m 이상 이동');
+          console.log('위치 변경 감지 (100m 이상 이동 또는 초기 위치): 주변 매장 검색 실행');
           // 디바운스 적용하여 검색 실행
-          debouncedSearchNearbyStores(currentCoords); // 현재 위치 좌표 전달
+          debouncedSearchNearbyStores(currentCoords); // 실제 사용자 현재 위치 좌표 전달
           setPrevLocation({ latitude, longitude });
         } else {
-          console.log('작은 위치 변경 무시: 100m 이내 이동');
+          // console.log('작은 위치 변경 무시: 100m 이내 이동');
         }
       }
-    }, [location, mapLoaded, uniqueBrands]);
+    }, [location, mapLoaded, uniqueBrands]); // prevLocation을 의존성 배열에서 제거하여, location 변경 시 항상 재평가
 
     // 선택된 브랜드가 변경될 때 지도 마커 필터링
     useEffect(() => {

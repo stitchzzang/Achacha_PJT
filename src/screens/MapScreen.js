@@ -14,6 +14,8 @@ const MapScreen = () => {
   const [selectedBrand, setSelectedBrand] = useState(null);
   const mapRef = useRef(null);
   const geofencingServiceRef = useRef(null);
+  const gifticonSheetRef = useRef(null);
+  const currentSheetIndexRef = useRef(1); // BottomSheet 현재 인덱스 추적, 초기값 1
 
   const {
     gifticons,
@@ -60,6 +62,11 @@ const MapScreen = () => {
       }
       moveToCurrentLocation();
 
+      // 화면이 포커스될 때 BottomSheet를 기본 스냅 포인트로 설정 (현재 인덱스가 1이 아닌 경우에만)
+      if (gifticonSheetRef.current && currentSheetIndexRef.current !== 1) {
+        gifticonSheetRef.current.snapToIndex(1); // snapPoints[1] ('30%')
+      }
+
       return () => {
         // 화면이 포커스를 잃을 때 특별히 정리할 작업이 있다면 여기에 추가
       };
@@ -83,8 +90,8 @@ const MapScreen = () => {
 
   // 매장 검색 결과 처리 콜백
   const handleStoresFound = async storeResults => {
-    console.log('[MapScreen] 매장 검색 결과 수신:', storeResults.length);
-    console.log('[MapScreen] 매장 데이터 구조:', JSON.stringify(storeResults.slice(0, 1)));
+    // console.log('[MapScreen] 매장 검색 결과 수신:', storeResults.length);
+    // console.log('[MapScreen] 매장 데이터 구조:', JSON.stringify(storeResults.slice(0, 1)));
 
     if (!geofencingServiceRef.current) {
       console.error('[MapScreen] 지오펜싱 서비스 참조가 없음');
@@ -169,6 +176,11 @@ const MapScreen = () => {
     }
   }, []);
 
+  // BottomSheet 인덱스 변경 시 호출될 콜백
+  const handleSheetIndexChange = useCallback(index => {
+    currentSheetIndexRef.current = index;
+  }, []);
+
   return (
     <SafeAreaView style={styles.container} edges={['bottom']}>
       <StatusBar barStyle="dark-content" backgroundColor="#fafafa" />
@@ -198,11 +210,13 @@ const MapScreen = () => {
 
       {/* 기프티콘 목록 하단 시트 */}
       <GifticonBottomSheet
+        ref={gifticonSheetRef}
         gifticons={filteredGifticons}
         onUseGifticon={handleUseGifticon}
         onSelectBrand={handleSelectBrand}
         selectedBrand={selectedBrand}
         isLoading={isLoading}
+        onSheetIndexChange={handleSheetIndexChange}
       />
     </SafeAreaView>
   );

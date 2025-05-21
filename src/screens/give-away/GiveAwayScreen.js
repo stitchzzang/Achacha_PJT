@@ -9,6 +9,8 @@ import {
   Alert,
   StatusBar,
   ActivityIndicator,
+  PermissionsAndroid,
+  Platform,
 } from 'react-native';
 import Svg, { Circle } from 'react-native-svg';
 import GiveAwayGifticonList from '../../components/GiveAwayGifticonList';
@@ -22,9 +24,8 @@ import Icon from 'react-native-vector-icons/MaterialIcons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
-import { PermissionsAndroid } from 'react-native';
 import { mapGifticonService } from '../../services/mapGifticonService';
-import { GestureDetector, Gesture } from 'react-native-gesture-handler';
+import { GestureDetector, Gesture, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -34,6 +35,11 @@ import Animated, {
   withSequence,
 } from 'react-native-reanimated';
 import useGifticonListStore from '../../store/gifticonListStore';
+import {
+  BottomSheetModal,
+  BottomSheetModalProvider,
+  BottomSheetBackdrop,
+} from '@gorhom/bottom-sheet';
 
 const { width, height } = Dimensions.get('window');
 const giveAwayButtonImg = require('../../assets/images/giveaway_button.png');
@@ -58,9 +64,6 @@ const availableDescriptions = [
 ];
 const lottieAnimationSize = width * 1.2;
 
-// 로티 애니메이션 파일을 미리 변수에 저장
-const giveawayLoadingAnimation = require('../../assets/lottie/giveaway_loading.json');
-
 const GiveAwayScreen = ({ onClose }) => {
   const { theme } = useTheme();
   const insets = useSafeAreaInsets();
@@ -68,7 +71,6 @@ const GiveAwayScreen = ({ onClose }) => {
   const [userPositions, setUserPositions] = useState([]);
   const [userDataReady, setUserDataReady] = useState(false);
   const userPositionsRef = useRef([]);
-  const [listVisible, setListVisible] = useState(false);
   const [confirmModalVisible, setConfirmModalVisible] = useState(false);
   const [selectedGifticon, setSelectedGifticon] = useState(null);
   const [buttonVisible, setButtonVisible] = useState(false);
@@ -91,12 +93,30 @@ const GiveAwayScreen = ({ onClose }) => {
   const [isTransferring, setIsTransferring] = useState(false);
   const [bluetoothReady, setBluetoothReady] = useState(false);
   const [isScanning, setIsScanning] = useState(false);
+  const [isGifticonsPreloaded, setIsGifticonsPreloaded] = useState(false);
 
   const buttonTranslateX = useSharedValue(0);
   const buttonTranslateY = useSharedValue(0);
   const buttonScale = useSharedValue(1);
   const buttonOpacity = useSharedValue(1);
   const gestureContext = useSharedValue({ startX: 0, startY: 0 });
+
+  // BottomSheet 참조 및 스냅 포인트
+  const bottomSheetModalRef = useRef(null);
+  const snapPoints = ['35%']; // 바텀시트 높이 조절
+
+  const renderBackdrop = useCallback(
+    props => (
+      <BottomSheetBackdrop
+        {...props}
+        disappearsOnIndex={-1}
+        appearsOnIndex={0}
+        opacity={0.5} // 배경 어둡게 처리
+        pressBehavior="close" // 배경 클릭 시 닫기
+      />
+    ),
+    []
+  );
 
   const animatedButtonStyle = useAnimatedStyle(() => {
     return {
@@ -354,7 +374,17 @@ const GiveAwayScreen = ({ onClose }) => {
     const initialize = async () => {
       try {
         bleServiceRef.current = nearbyUsersService;
-        // console.log('BLE 서비스 초기화 중...');
+        console.log('BLE 서비스 초기화 중...');
+
+        // 위치 추적 중지 안전하게 처리
+        try {
+          if (bleServiceRef.current && bleServiceRef.current.stopLocationTracking) {
+            await bleServiceRef.current.stopLocationTracking();
+            console.log('위치 추적 중지됨');
+          }
+        } catch (err) {
+          console.log('위치 추적 중지 시도 중 오류 (무시됨):', err.message);
+        }
 
         try {
           await bleServiceRef.current.stopAdvertising();
@@ -365,16 +395,44 @@ const GiveAwayScreen = ({ onClose }) => {
 
         const initResult = await bleServiceRef.current.initialize();
         setBluetoothReady(initResult);
-        console.log(`BLE 초기화 ${initResult ? '성공' : '실패'}`);
+        // console.log(`BLE 초기화 ${initResult ? '성공' : '실패'}`);
 
         if (initResult) {
-          try {
-            await bleServiceRef.current.startAdvertising();
-            console.log('광고 시작됨');
-          } catch (err) {
-            console.error('광고 시작 중 오류:', err);
-          }
+          if (Platform.OS === 'android') {
+            const granted = await PermissionsAndroid.requestMultiple(permissions);
+            const allPermissionsGranted = Object.values(granted).every(
+              status => status === PermissionsAndroid.RESULTS.GRANTED
+            );
 
+            if (allPermissionsGranted) {
+              console.log('모든 BLE 관련 권한 획득');
+              try {
+                await bleServiceRef.current.startAdvertising();
+                console.log('광고 시작됨');
+              } catch (err) {
+                console.error('광고 시작 중 오류:', err);
+                Alert.alert('오류', '광고 시작 중 문제가 발생했습니다: ' + err.message);
+              }
+            } else {
+              console.log('BLE 관련 권한 중 일부 또는 전체가 거부됨');
+              Alert.alert(
+                '권한 필요',
+                '주변 사용자를 찾고 연결하려면 블루투스 및 위치 권한이 필요합니다.'
+              );
+              setLoading(false);
+              return;
+            }
+          } else {
+            // iOS 또는 다른 플랫폼의 경우
+            try {
+              await bleServiceRef.current.startAdvertising();
+              console.log('광고 시작됨 (iOS 또는 기타 플랫폼)');
+            } catch (err) {
+              console.error('광고 시작 중 오류:', err);
+              Alert.alert('오류', '광고 시작 중 문제가 발생했습니다: ' + err.message);
+            }
+          }
+          // 권한 처리 후 스캔 시작
           await startScanning();
         } else {
           console.log('BLE 초기화 실패');
@@ -418,7 +476,6 @@ const GiveAwayScreen = ({ onClose }) => {
       setUserPositions([]);
       setUserDataReady(false);
       userPositionsRef.current = [];
-      setListVisible(false);
       setSelectedGifticon(null);
 
       setButtonVisible(false);
@@ -455,8 +512,32 @@ const GiveAwayScreen = ({ onClose }) => {
     }
   };
 
+  useEffect(() => {
+    // 화면이 마운트될 때 백그라운드에서 기프티콘 데이터 미리 로드
+    const preloadGifticons = async () => {
+      try {
+        console.log('기프티콘 데이터 미리 로드 중...');
+        const response = await mapGifticonService.getGiveAwayGifticons();
+
+        // 조용히 데이터 캐싱
+        if (response && response.gifticons) {
+          setGiveAwayGifticons(response);
+          // 데이터가 이미 로드되었음을 표시하는 플래그 설정
+          setIsGifticonsPreloaded(true);
+        }
+      } catch (error) {
+        console.log('기프티콘 미리 로드 실패:', error);
+        // 실패해도 사용자에게 알리지 않음 - 버튼 클릭 시 다시 시도
+      }
+    };
+
+    // 주변 사용자 검색이 완료된 후 기프티콘 미리 로드
+    if (userDataReady && users.length > 0 && !isGifticonsPreloaded) {
+      preloadGifticons();
+    }
+  }, [userDataReady, users.length, isGifticonsPreloaded]);
+
   const loadGiveAwayGifticons = async () => {
-    setIsLoadingGifticons(true);
     try {
       const response = await mapGifticonService.getGiveAwayGifticons();
       if (response && response.gifticons) {
@@ -473,17 +554,20 @@ const GiveAwayScreen = ({ onClose }) => {
     }
   };
 
-  const handleButtonClick = async () => {
-    setIsLoadingGifticons(true);
-    try {
-      await loadGiveAwayGifticons();
-      setListVisible(true);
-      setButtonVisible(false);
-    } catch (error) {
-      console.error('기프티콘 목록 로드 중 오류:', error);
-      Alert.alert('오류', '기프티콘 목록을 불러오는 중 문제가 발생했습니다.');
-    } finally {
+  const handleButtonClick = () => {
+    setButtonVisible(false);
+
+    // 바텀시트 즉시 표시
+    bottomSheetModalRef.current?.present();
+
+    // 이미 데이터가 로드되어 있는지 확인
+    if (isGifticonsPreloaded && giveAwayGifticons.gifticons.length > 0) {
       setIsLoadingGifticons(false);
+    } else {
+      setIsLoadingGifticons(true);
+      setTimeout(() => {
+        loadGiveAwayGifticons();
+      }, 0);
     }
   };
 
@@ -507,7 +591,7 @@ const GiveAwayScreen = ({ onClose }) => {
       selectedGifticon: gifticon,
     };
     setConfirmModalVisible(true);
-    setListVisible(false);
+    bottomSheetModalRef.current?.dismiss();
   };
 
   const handleConfirm = () => {
@@ -528,7 +612,6 @@ const GiveAwayScreen = ({ onClose }) => {
     }
 
     setConfirmModalVisible(false);
-    setListVisible(false);
     setButtonVisible(false);
     setCenterButtonVisible(usersRef.current.length > 0 && !!selectedGifticonRef.current);
 
@@ -538,7 +621,7 @@ const GiveAwayScreen = ({ onClose }) => {
   const handleCancel = () => {
     setSelectedGifticon(null);
     setConfirmModalVisible(false);
-    setButtonVisible(usersRef.current.length > 0);
+    setButtonVisible(usersRef.current.length > 0 && !selectedGifticonRef.current);
     setCenterButtonVisible(false);
 
     selectedGifticonRef.current = null;
@@ -558,10 +641,11 @@ const GiveAwayScreen = ({ onClose }) => {
   };
 
   const handleOutsidePress = () => {
-    if (listVisible) {
-      setListVisible(false);
-      setButtonVisible(true);
-    }
+    // if (listVisible) { // listVisible 대신 바텀시트 상태를 확인해야 하지만,
+    // BottomSheetBackdrop의 pressBehavior="close"가 이 역할을 수행
+    //   bottomSheetModalRef.current?.dismiss();
+    //   setButtonVisible(true);
+    // }
   };
 
   const handleGoBack = useCallback(() => {
@@ -671,7 +755,7 @@ const GiveAwayScreen = ({ onClose }) => {
   // API 성공 시 알림창 확인 버튼 핸들러
   const handleApiSuccessAlertConfirm = () => {
     resetAfterSendReanimated();
-    navigation.navigate('MapScreen');
+    navigation.navigate('Main', { screen: 'TabMap' });
   };
 
   // API 에러 시 알림창 확인 버튼 핸들러 (이전과 동일, 현재 화면 유지)
@@ -681,6 +765,12 @@ const GiveAwayScreen = ({ onClose }) => {
 
   const sendGifticonToUser = async user => {
     const gifticonToSend = userDataRef.current.selectedGifticon;
+    console.log('[DEBUG] sendGifticonToUser 시작:', {
+      user,
+      gifticonToSend,
+      bleToken: user?.bleToken,
+      userDataRef: userDataRef.current,
+    });
 
     if (!gifticonToSend || !user || !user.bleToken) {
       console.error('[API] 전송 실패: 필요한 정보 누락.', { gifticonToSend, user });
@@ -743,170 +833,195 @@ const GiveAwayScreen = ({ onClose }) => {
     );
   };
 
+  const handleSheetChanges = useCallback(index => {
+    // console.log('바텀시트 인덱스 변경:', index);
+    if (index === -1) {
+      // 바텀시트가 닫혔을 때 상태 초기화
+      setIsLoadingGifticons(false);
+      // 기프티콘이 선택되지 않았고, 주변 사용자가 있다면 목록 버튼 다시 표시
+      if (!selectedGifticonRef.current && usersRef.current.length > 0) {
+        setButtonVisible(true);
+      }
+    }
+  }, []);
+
   return (
-    <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
-      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <BottomSheetModalProvider>
+        <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+          <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} />
 
-      <View style={{ height: insets.top, backgroundColor: theme.colors.background }} />
+          <View style={{ height: insets.top, backgroundColor: theme.colors.background }} />
 
-      <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
-        <TouchableOpacity onPress={handleGoBack} style={styles.backButtonContainer}>
-          <Icon name="arrow-back-ios" type="material" size={22} color={theme.colors.black} />
-        </TouchableOpacity>
-        <Text style={[styles.headerTitle, { color: theme.colors.black }]}>기프티콘 뿌리기</Text>
-        <TouchableOpacity
-          onPress={handleRefresh}
-          style={[styles.refreshButton, isScanning && styles.refreshButtonSpinning]}
-          disabled={isScanning || loading}
-        >
-          <Icon
-            name="refresh"
-            type="material"
-            size={24}
-            color={isScanning || loading ? theme.colors.gray : theme.colors.black}
-          />
-        </TouchableOpacity>
-      </View>
-
-      <View style={styles.contentContainer}>
-        <TouchableOpacity
-          style={styles.svgContainer}
-          activeOpacity={1}
-          onPress={handleOutsidePress}
-        >
-          <Svg width={width} height={height} style={styles.svgImage}>
-            {radiusArray.map((radius, index) => (
-              <Circle
-                key={index}
-                cx={centerX}
-                cy={centerY}
-                r={radius}
-                stroke="#CCCCCC"
-                strokeWidth="1"
-                fill="transparent"
+          <View style={[styles.header, { backgroundColor: theme.colors.background }]}>
+            <TouchableOpacity onPress={handleGoBack} style={styles.backButtonContainer}>
+              <Icon name="arrow-back-ios" type="material" size={22} color={theme.colors.black} />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: theme.colors.black }]}>기프티콘 뿌리기</Text>
+            <TouchableOpacity
+              onPress={handleRefresh}
+              style={[styles.refreshButton, isScanning && styles.refreshButtonSpinning]}
+              disabled={isScanning || loading}
+            >
+              <Icon
+                name="refresh"
+                type="material"
+                size={24}
+                color={isScanning || loading ? theme.colors.gray : theme.colors.black}
               />
-            ))}
-          </Svg>
+            </TouchableOpacity>
+          </View>
 
-          {loading ? (
-            <View style={styles.loadingOverlay}>
-              <LottieView
-                source={giveawayLoadingAnimation}
-                autoPlay
-                loop
-                style={{
-                  width: lottieAnimationSize,
-                  height: lottieAnimationSize,
-                }}
+          <View style={styles.contentContainer}>
+            <TouchableOpacity
+              style={styles.svgContainer}
+              activeOpacity={1}
+              onPress={handleOutsidePress}
+            >
+              <Svg width={width} height={height} style={styles.svgImage}>
+                {radiusArray.map((radius, index) => (
+                  <Circle
+                    key={index}
+                    cx={centerX}
+                    cy={centerY}
+                    r={radius}
+                    stroke="#CCCCCC"
+                    strokeWidth="1"
+                    fill="transparent"
+                  />
+                ))}
+              </Svg>
+
+              {loading ? (
+                <View style={styles.loadingOverlay}>
+                  <LottieView
+                    source={require('../../assets/lottie/giveaway_loading.json')}
+                    autoPlay
+                    loop
+                    style={{
+                      width: lottieAnimationSize,
+                      height: lottieAnimationSize,
+                    }}
+                  />
+                </View>
+              ) : userDataReady && users.length > 0 && userPositions.length === users.length ? (
+                users.map((user, index) => {
+                  const position = userPositions[index];
+                  if (!position) return null;
+                  const baseSize = 80;
+                  const adjustedSize = baseSize * position.scale;
+
+                  const isSentUser = giftSentUserId === user.uuid;
+
+                  return (
+                    <Animated.View
+                      key={`user-${user.uuid}`}
+                      style={[
+                        styles.userContainer,
+                        {
+                          left: position.x - adjustedSize / 2,
+                          top: position.y - adjustedSize / 2,
+                          width: adjustedSize,
+                          opacity: position.opacity,
+                          zIndex: 10 - position.distanceIndex,
+                        },
+                        isSentUser && receivedUserAnimatedStyle,
+                      ]}
+                    >
+                      {isSentUser && (
+                        <Animated.View style={[styles.giftGlow, giftGlowAnimatedStyle]} />
+                      )}
+                      <View
+                        style={[
+                          styles.emojiContainer,
+                          { width: adjustedSize, height: adjustedSize },
+                        ]}
+                      >
+                        <Image
+                          source={availableImages[user.displayImageIndex]}
+                          style={{
+                            width: adjustedSize,
+                            height: adjustedSize,
+                            resizeMode: 'contain',
+                          }}
+                        />
+                      </View>
+                      <Text style={[styles.userName, { color: theme.colors.text }]}>
+                        {availableDescriptions[user.displayDescriptionIndex]}
+                      </Text>
+                    </Animated.View>
+                  );
+                })
+              ) : (
+                <NoUsersScreen onRefresh={handleRefresh} />
+              )}
+
+              <Tooltip
+                visible={showTooltip}
+                message="선물 버튼을 원하는 방향으로 드래그하면 기프티콘 뿌리기가 시작됩니다."
+                autoHide={true}
+                duration={2000}
+                opacityShared={tooltipOpacityShared}
               />
-            </View>
-          ) : userDataReady && users.length > 0 && userPositions.length === users.length ? (
-            users.map((user, index) => {
-              const position = userPositions[index];
-              if (!position) return null;
-              const baseSize = 80;
-              const adjustedSize = baseSize * position.scale;
 
-              const isSentUser = giftSentUserId === user.uuid;
-
-              return (
-                <Animated.View
-                  key={`user-${user.uuid}`}
-                  style={[
-                    styles.userContainer,
-                    {
-                      left: position.x - adjustedSize / 2,
-                      top: position.y - adjustedSize / 2,
-                      width: adjustedSize,
-                      opacity: position.opacity,
-                      zIndex: 10 - position.distanceIndex,
-                    },
-                    isSentUser && receivedUserAnimatedStyle,
-                  ]}
-                >
-                  {isSentUser && <Animated.View style={[styles.giftGlow, giftGlowAnimatedStyle]} />}
-                  <View
-                    style={[styles.emojiContainer, { width: adjustedSize, height: adjustedSize }]}
+              {centerButtonVisible && (
+                <GestureDetector gesture={panGesture}>
+                  <Animated.View
+                    style={[
+                      styles.centerButtonContainer,
+                      animatedButtonStyle,
+                      isTransferring && styles.buttonHiddenWhileTransferring,
+                    ]}
                   >
-                    <Image
-                      source={availableImages[user.displayImageIndex]}
-                      style={{
-                        width: adjustedSize,
-                        height: adjustedSize,
-                        resizeMode: 'contain',
-                      }}
-                    />
-                  </View>
-                  <Text style={[styles.userName, { color: theme.colors.text }]}>
-                    {availableDescriptions[user.displayDescriptionIndex]}
-                  </Text>
-                </Animated.View>
-              );
-            })
-          ) : (
-            <NoUsersScreen onRefresh={handleRefresh} />
-          )}
+                    {!isTransferring && (
+                      <Image source={giveAwayButtonImg} style={styles.centerButtonImage} />
+                    )}
+                  </Animated.View>
+                </GestureDetector>
+              )}
+            </TouchableOpacity>
 
-          <Tooltip
-            visible={showTooltip}
-            message="선물 버튼을 원하는 방향으로 드래그하면 기프티콘 뿌리기가 시작됩니다."
-            autoHide={true}
-            duration={2000}
-            opacityShared={tooltipOpacityShared}
-          />
-
-          {centerButtonVisible && (
-            <GestureDetector gesture={panGesture}>
-              <Animated.View
-                style={[
-                  styles.centerButtonContainer,
-                  animatedButtonStyle,
-                  isTransferring && styles.buttonHiddenWhileTransferring,
-                ]}
-              >
-                {!isTransferring && (
-                  <Image source={giveAwayButtonImg} style={styles.centerButtonImage} />
-                )}
-              </Animated.View>
-            </GestureDetector>
-          )}
-        </TouchableOpacity>
-
-        {buttonVisible && !loading && (
-          <TouchableOpacity style={styles.giveawayButton} onPress={handleButtonClick}>
-            <Image source={giveAwayButtonImg} style={styles.buttonImage} />
-          </TouchableOpacity>
-        )}
-
-        {listVisible && (
-          <TouchableOpacity
-            style={styles.gifticonListContainer}
-            activeOpacity={1}
-            onPress={e => e.stopPropagation()}
-          >
-            {isLoadingGifticons ? (
-              <ActivityIndicator
-                size="large"
-                color={theme.colors.primary || '#007bff'}
-                style={{ flex: 1, justifyContent: 'center' }}
-              />
-            ) : (
-              <GiveAwayGifticonList
-                gifticons={giveAwayGifticons.gifticons}
-                onSelectGifticon={handleGifticonSelect}
-              />
+            {buttonVisible && !loading && (
+              <TouchableOpacity style={styles.giveawayButton} onPress={handleButtonClick}>
+                <Image source={giveAwayButtonImg} style={styles.buttonImage} />
+              </TouchableOpacity>
             )}
-          </TouchableOpacity>
-        )}
 
-        <GifticonConfirmModal
-          visible={confirmModalVisible}
-          selectedGifticon={selectedGifticon}
-          onCancel={handleCancel}
-          onConfirm={handleConfirm}
-        />
-      </View>
-    </View>
+            <GifticonConfirmModal
+              visible={confirmModalVisible}
+              selectedGifticon={selectedGifticon}
+              onCancel={handleCancel}
+              onConfirm={handleConfirm}
+            />
+          </View>
+
+          <BottomSheetModal
+            ref={bottomSheetModalRef}
+            index={0}
+            snapPoints={snapPoints}
+            onChange={handleSheetChanges}
+            backdropComponent={renderBackdrop}
+            handleIndicatorStyle={styles.bottomSheetHandleIndicator}
+            backgroundStyle={styles.bottomSheetBackground}
+          >
+            <View style={styles.bottomSheetContentContainer}>
+              {isLoadingGifticons ? (
+                <ActivityIndicator
+                  size="large"
+                  color={theme.colors.primary || '#007bff'}
+                  style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}
+                />
+              ) : (
+                <GiveAwayGifticonList
+                  gifticons={giveAwayGifticons.gifticons}
+                  onSelectGifticon={handleGifticonSelect}
+                />
+              )}
+            </View>
+          </BottomSheetModal>
+        </View>
+      </BottomSheetModalProvider>
+    </GestureHandlerRootView>
   );
 };
 
@@ -981,6 +1096,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    zIndex: 5,
   },
   buttonImage: {
     width: 45,
@@ -1048,6 +1164,21 @@ const styles = StyleSheet.create({
   },
   buttonHiddenWhileTransferring: {
     opacity: 0,
+  },
+  bottomSheetContentContainer: {
+    flex: 1,
+  },
+  bottomSheetHandleIndicator: {
+    backgroundColor: '#A0A0A0',
+    width: 50,
+    height: 5,
+    borderRadius: 3,
+  },
+  bottomSheetBackground: {
+    backgroundColor: '#E5F4FE',
+    borderRadius: 20,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
   },
 });
 
