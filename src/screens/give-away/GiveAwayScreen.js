@@ -234,6 +234,7 @@ const GiveAwayScreen = ({ onClose }) => {
     setIsScanning(false);
     setLoading(false);
 
+    console.log('[BLE 탐색 결과] 전체 사용자 명단:', allUsers);
     if (allUsers && allUsers.length > 0) {
       const mappedUsers = allUsers
         .map((user, index) => {
@@ -251,6 +252,7 @@ const GiveAwayScreen = ({ onClose }) => {
         })
         .slice(0, 5);
 
+      console.log('[BLE 탐색 결과] 매핑된 사용자 명단:', mappedUsers);
       setUsers(mappedUsers);
       userDataRef.current = {
         ...userDataRef.current,
@@ -693,11 +695,12 @@ const GiveAwayScreen = ({ onClose }) => {
     try {
       addReceivedAnimationReanimated(user.uuid);
       const gifticonIdToUse = gifticonToSend.gifticonId;
-      // console.log('[API] 실제 API 호출 시작:', {
-      //   gifticonId: gifticonIdToUse,
-      //   bleTokens: [user.bleToken],
-      // });
-      const response = await giveAwayService.giveAwayGifticon(gifticonIdToUse, [user.bleToken]);
+      console.log('[API] 기프티콘 전송 대상 bleToken:', user.bleToken);
+      console.log('[API] 호출 파라미터:', {
+        gifticonId: gifticonIdToUse,
+        bleTokens: [user.bleToken],
+      });
+      const apiResponse = await giveAwayService.giveAwayGifticon(gifticonIdToUse, [user.bleToken]);
       // console.log('[API] 호출 성공:', response);
 
       // 로컬 스토어에서 기프티콘 제거
