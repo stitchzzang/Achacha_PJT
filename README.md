@@ -73,10 +73,12 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - 보유 기프티콘 요약 정보 제공
 - 유효기간 임박 기프티콘 우선 표시
 - 빠른 접근을 위한 주요 기능 바로가기
+  
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/b0637a39-10a4-4d83-a514-e2993c03c7ec" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/25f57233-a8da-4175-80a0-dce1867c0060" height="500">
+</p>
 
-![rn_image_picker_lib_temp_823f089f-3c07-450f-a428-d181e58c4389.gif](attachment:0edf7c71-db9c-4b4a-aad6-4d5614ef9e7e:rn_image_picker_lib_temp_823f089f-3c07-450f-a428-d181e58c4389.gif)
-
-![홈.gif](attachment:820584d3-06e7-4801-9416-bd9ace519972:홈.gif)
 
 ### 2. 기프티콘 등록
 
@@ -84,34 +86,39 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - OCR + LangChain을 통한 자동 정보 추출
 - 공유 인텐트를 통한 갤러리, 문자에서 직접 등록 지원
 
-![기프티콘 등록.gif](attachment:29dae6f5-bc4b-4b73-ae10-de76edb5b7cd:기프티콘_등록.gif)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/05b9f4e9-0984-40bc-ae66-90cd791edf98" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/90ee041c-e000-4867-9387-14d57f27496c" height="500">
+</p>
 
-![이미지크롭.gif](attachment:ff0b9530-5b73-4150-82b1-5e4eb426b362:이미지크롭.gif)
 
 ### 3. 기프티콘 관리
 
 - 전체 기프티콘(금액형, 상품형) 목록 조회
 - 유효기간 임박순, 등록순 정렬
 
-![기프티콘 목록.gif](attachment:590c6689-505c-47ec-b084-94a0b65f469f:기프티콘_목록.gif)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/7a7da1ef-1a54-484f-b694-6f3305f01179" height="500" style="margin-right: 20px;">
+</p>
 
 ### 4. 기프티콘 사용하기
 
 - 금액형 사용하기, 상품형 사용하기
 
-![금액형사용하기.gif](attachment:e8e4aef4-b7ec-40b8-ba7a-696aeb701cc4:금액형사용하기.gif)
-
-![상품형사용하기.gif](attachment:8196fa22-dfb0-45ca-bf10-181824093ebf:상품형사용하기.gif)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/6d2f5dcb-ec8f-4a5a-bd6c-cfd51f5889d1" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/a471b369-4056-4839-b41d-fc8763aca4ab" height="500">
+</p>
 
 - 바코드 화면 자동 밝기 조절 및 회전
 - 스와이프 제스처를 통한 간편한 사용 처리
 - 사용 완료 확인 알림 제공
 
-![스와이프.gif](attachment:dc17c72b-fc30-4d61-9ceb-a0afc5e98972:스와이프.gif)
-
-![바코드 조회.gif](attachment:f3460af9-aaac-4d1b-9abf-865a601fecc2:바코드_조회.gif)
-
-![image.png](attachment:3293f04f-89bc-450b-a630-01b671e118f2:image.png)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/e66fcae8-f688-4f6a-b980-bae41101a577" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/05d7f88b-7c6e-4d2b-9fc4-837e0ce57a80" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/7accd59d-5007-4ed6-8018-006fe0c9f1a2" height="500">
+</p>
 
 ### 5. 기프티콘 선물하기
 
@@ -119,18 +126,20 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - 웹 링크 기반으로 아차차 미가입자도 수신 가능
 - 선물 메시지와 함께 마음 전달
 
-![선물하기.gif](attachment:47b68e6e-e6dc-47aa-a0c4-1e171918d7a9:선물하기.gif)
-
-![선물받기.gif](attachment:485d6cdd-1fa7-4eaf-b225-e2a540499be6:선물받기.gif)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/9a1ff6f9-eb65-42fc-bb01-c2dafbb4a6b8" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/9001dc9d-9b67-4e44-8f29-d1a7e382cacb" height="500">
+</p>
 
 ### 6. 내 주변
 
 - BLE 기반 주변 사용자 탐지 (반경 100m)
 - 실시간 기프티콘 뿌리기 및 수신
-
-![내주변지도.gif](attachment:6a92dc85-c4cc-4b54-892f-871e9ba8d838:내주변지도.gif)
-
-![뿌리기2.gif](attachment:3da94534-02ea-4b5d-9f57-1ab13d7e95a0:뿌리기2.gif)
+  
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/2cb907a0-c7ff-46f2-ac5a-298ba478c894" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/2bb84307-aaa0-4546-9abf-f798b5b72d13" height="500">
+</p>
 
 ### 7. 쉐어박스
 
@@ -138,17 +147,19 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - 초대 코드를 통한 간편한 참여
 - 공유된 기프티콘을 모든 구성원이 사용 가능
 
-![쉐어박스-생성.gif](attachment:9828db6a-4e20-4517-9f7d-96599669eb91:쉐어박스-생성.gif)
-
-![image.png](attachment:e68fd4b3-e97f-4762-8414-e3e84e0e48eb:image.png)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/3bbe9f18-5e85-4259-874a-805699cb48f8" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/123a552f-79ad-44bb-a3be-b3fcc1b9d160" height="500">
+</p>
 
 ### 8. 알림
 
 - 유효기간 만료, 주변 매장, 사용완료 여부, 쉐어박스, 기프티콘 뿌리기 수신 알림 제공
 
-![주변매장알림.gif](attachment:010b9527-f5fb-4c8b-8f7d-fe2a99854a26:주변매장알림.gif)
-
-![image.png](attachment:1ffbd631-c803-4433-847b-57d9e594c21d:image.png)
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/8792fa2b-959b-4371-8558-194ecad637c0" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/5bdce60f-3105-4c8b-9233-ac020c746843" height="500">
+</p>
 
 ### 9. 워치 연동
 
