@@ -302,7 +302,7 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 | 안수진 | 팀장, Backend 개발 | [asj7090@gmail.com](mailto:asj7090@gmail.com) |
 | 류재문 | BackEnd 개발 | [woans5970@naver.com](mailto:woans5970@naver.com) |
 | 조대성 | BackEnd 개발 | [tfer2442@naver.com](mailto:tfer2442@naver.com) |
-| 신해인 | FrontEnd 리더, UI/UX 디자인 | [godls0215@naver.com](mailto:godls0215@naver.com) |
+| 신해인 | FrontEnd 리더, FrontEnd 개발, UI/UX 디자인 | [godls0215@naver.com](mailto:godls0215@naver.com) |
 | 박준수 | FrontEnd 개발 | [koup28@naver.com](mailto:koup28@naver.com) |
 | 정주은 | FrontEnd 개발 | [jooeun0807@naver.com](mailto:jooeun0807@naver.com) |
 
