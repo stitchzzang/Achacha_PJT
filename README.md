@@ -73,9 +73,9 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - 보유 기프티콘 요약 정보 제공
 - 유효기간 임박 기프티콘 우선 표시
 - 빠른 접근을 위한 주요 기능 바로가기
-  
+
 <p align="left">
-    <img src="https://github.com/user-attachments/assets/b0637a39-10a4-4d83-a514-e2993c03c7ec" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/ccdde075-261a-42bc-a6fb-6ab43d5bd5a7" height="500" style="margin-right: 20px;">
     <img src="https://github.com/user-attachments/assets/25f57233-a8da-4175-80a0-dce1867c0060" height="500">
 </p>
 
@@ -89,6 +89,7 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 <p align="left">
     <img src="https://github.com/user-attachments/assets/05b9f4e9-0984-40bc-ae66-90cd791edf98" height="500" style="margin-right: 20px;">
     <img src="https://github.com/user-attachments/assets/90ee041c-e000-4867-9387-14d57f27496c" height="500">
+    <img src="https://github.com/user-attachments/assets/1cefc842-9228-4005-8909-9e2f7f047195" height="500">
 </p>
 
 
@@ -150,6 +151,7 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 <p align="left">
     <img src="https://github.com/user-attachments/assets/3bbe9f18-5e85-4259-874a-805699cb48f8" height="500" style="margin-right: 20px;">
     <img src="https://github.com/user-attachments/assets/123a552f-79ad-44bb-a3be-b3fcc1b9d160" height="500">
+    <img src="https://github.com/user-attachments/assets/a75191de-73fa-40a6-a4cf-97d5a62f06e2" height="500">
 </p>
 
 ### 8. 알림
@@ -157,14 +159,19 @@ OCR과 LangChain 기술을 활용해 기프티콘 이미지만으로 모든 정�
 - 유효기간 만료, 주변 매장, 사용완료 여부, 쉐어박스, 기프티콘 뿌리기 수신 알림 제공
 
 <p align="left">
-    <img src="https://github.com/user-attachments/assets/8792fa2b-959b-4371-8558-194ecad637c0" height="500" style="margin-right: 20px;">
-    <img src="https://github.com/user-attachments/assets/5bdce60f-3105-4c8b-9233-ac020c746843" height="500">
+    <img src="https://github.com/user-attachments/assets/1fbbd48a-d529-4de3-abed-5b5a0fa625d1" height="500" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/61c9f2c6-2f22-49d0-9fdc-b82f3a93d17d" height="500">
+    <img src="https://github.com/user-attachments/assets/02adaf1e-d5ad-402f-a904-221a88f18663" height="500">
 </p>
 
 ### 9. 워치 연동
 
 - 스마트워치에서 기프티콘 확인 및 사용 가능
 - 간편한 접근성과 빠른 실행 지원
+<p align="left">
+    <img src="https://github.com/user-attachments/assets/e2b18aff-00e8-4f25-a5e0-fbd315cb46ae" height="400" style="margin-right: 20px;">
+    <img src="https://github.com/user-attachments/assets/3feb04ac-2212-4805-998b-0977fd9de289" height="400">
+</p>
   
 ## 🔬 주요 기술   
 
